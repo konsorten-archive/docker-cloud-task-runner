@@ -62,7 +62,7 @@ cronjobsToAdd.forEach(cronJob => {
           console.log('Success')
         } else {
           // TODO: Add better error handline
-          console.log('Failed')
+          console.log('Failed with status code ' + response.statusCode + '. Response body:\n ' + body)
         }
       })
     }))
