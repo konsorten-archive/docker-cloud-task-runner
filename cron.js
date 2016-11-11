@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-const linkedContainerApiUrlExpression = /^(.*)_TUTUM_API_URL$/g,
+const linkedContainerApiUrlExpression = /^(.*)_TUTUM_API_URL$/i,
   cronjobEnvVarSuffix = '_CRON',
   defaultCronPattern = '* 0 * * * *' // If no cron pattern provided, trigger the action once an hour.
 
