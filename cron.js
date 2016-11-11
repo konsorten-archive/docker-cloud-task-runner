@@ -74,7 +74,7 @@ cronjobsToAdd.forEach(cronJob => {
               'Authorization': dockerCloudAuthHeader
             }
           }, (error, response, body) => {
-            if (!error && response.statusCode == 202) {
+            if (!error && response.statusCode == 200) {
               ((JSON.parse(body) || []).objects || []).forEach(containerToStart => {
                 console.log('Trying manual boot of container ' + containerToStart.name)
                 request.post({
