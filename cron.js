@@ -90,7 +90,7 @@ cronjobsToAdd.forEach(cronJob => {
                   }})
               })
             } else {
-              console.log('Cannot get inner containers for service ' + cronJob.id, currentServiceUri, error, body, response.statusCode);
+              console.log('Cannot get inner containers for service ' + cronJob.id, (dockerCloudRestHost + '/api/app/v1/container/?state=Stopped&amp;service=' + currentServiceUri), currentServiceUri, error, body, response.statusCode);
             }
           })
         }
