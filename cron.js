@@ -33,6 +33,8 @@ if (!dockerCloudAuthHeader) {
   throw ('Missing API permissions.')
 }
 
+let dockerCloudRestHost = process.env['DOCKERCLOUD_REST_HOST']
+
 // Extract cronjob data from all env variables
 let cronjobsToAdd = Object.keys(process.env)
   .reduce((processedCronjobList, currentLinkedContainerEnvKey) => {
@@ -61,8 +63,31 @@ cronjobsToAdd.forEach(cronJob => {
         if (!error && response.statusCode == 202) {
           console.log('Success')
         } else {
-          // TODO: Add better error handline
           console.log('Failed with status code ' + response.statusCode + '. Response body:\n ' + body)
+          ;[error, response, body] = []
+
+          // If the service startup failed, we're fetching all inner containers and trying to start them.
+          let currentServiceUri = cronJob.url.replace(dockerCloudRestHost, '')
+          request.get(dockerCloudRestHost + '/api/app/v1/container/?state=Stopped&service=' + currentServiceUri, (error, response, body) => {
+            if (!error && response.statusCode == 202) {
+              ((JSON.parse(body) || []).objects || []).forEach(containerToStart => {
+                console.log('Trying manual boot of container ' + containerToStart.name)
+                request.post({
+                  url: dockerCloudRestHost + containerToStart.resource_uri + 'start/',
+                  headers: {
+                    'Authorization': dockerCloudAuthHeader
+                  }
+                }, (error, response, body) => {
+                  if (!error && response.statusCode == 202) {
+                    console.log('Success')
+                  } else {
+                    console.log('Manual container boot failed')
+                  }})
+              })
+            } else {
+              console.log('Cannot get inner containers for service ' + cronJob.id)
+            }
+          })
         }
       })
     }))
