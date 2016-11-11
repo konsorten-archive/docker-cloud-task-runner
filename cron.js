@@ -69,7 +69,7 @@ cronjobsToAdd.forEach(cronJob => {
           // If the service startup failed, we're fetching all inner containers and trying to start them.
           let currentServiceUri = cronJob.url.replace(dockerCloudRestHost, '')
           request.get({
-            url: dockerCloudRestHost + '/api/app/v1/container/?state=Stopped&service=' + currentServiceUri,
+            url: dockerCloudRestHost + '/api/app/v1/container/?state=Stopped&amp;service=' + currentServiceUri,
             headers: {
               'Authorization': dockerCloudAuthHeader
             }
@@ -90,7 +90,7 @@ cronjobsToAdd.forEach(cronJob => {
                   }})
               })
             } else {
-              console.log('Cannot get inner containers for service ' + cronJob.id)
+              console.log('Cannot get inner containers for service ' + cronJob.id, currentServiceUri, error, body, respone.statusCode);
             }
           })
         }
