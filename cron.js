@@ -68,7 +68,12 @@ cronjobsToAdd.forEach(cronJob => {
 
           // If the service startup failed, we're fetching all inner containers and trying to start them.
           let currentServiceUri = cronJob.url.replace(dockerCloudRestHost, '')
-          request.get(dockerCloudRestHost + '/api/app/v1/container/?state=Stopped&service=' + currentServiceUri, (error, response, body) => {
+          request.get({
+            url: dockerCloudRestHost + '/api/app/v1/container/?state=Stopped&service=' + currentServiceUri,
+            headers: {
+              'Authorization': dockerCloudAuthHeader
+            }
+          }, (error, response, body) => {
             if (!error && response.statusCode == 202) {
               ((JSON.parse(body) || []).objects || []).forEach(containerToStart => {
                 console.log('Trying manual boot of container ' + containerToStart.name)
