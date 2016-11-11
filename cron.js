@@ -90,7 +90,7 @@ cronjobsToAdd.forEach(cronJob => {
                   }})
               })
             } else {
-              console.log('Cannot get inner containers for service ' + cronJob.id, currentServiceUri, error, body, respone.statusCode);
+              console.log('Cannot get inner containers for service ' + cronJob.id, currentServiceUri, error, body, response.statusCode);
             }
           })
         }
