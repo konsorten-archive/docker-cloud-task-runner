@@ -42,7 +42,7 @@ let cronjobsToAdd = Object.keys(process.env)
     ;(currentLinkedContainerNameParts = linkedContainerApiUrlExpression.exec(currentLinkedContainerEnvKey)) ?
       processedCronjobList.push({
         id: currentLinkedContainerNameParts[1],
-        url: process.env[currentLinkedContainerEnvKey] + 'start/',
+        url: process.env[currentLinkedContainerEnvKey],
         pattern: process.env[currentLinkedContainerNameParts[1] + cronjobEnvVarSuffix] || defaultCronPattern
       }) : null
     return processedCronjobList
@@ -55,7 +55,7 @@ cronjobsToAdd.forEach(cronJob => {
     activeCronjobs.push(cron.schedule(cronJob.pattern, () => {
       console.log('Triggering ' + cronJob.id + ' start')
       request.post({
-        url: cronJob.url,
+        url: cronJob.url + 'start/',
         headers: {
           'Authorization': dockerCloudAuthHeader
         }
@@ -90,7 +90,7 @@ cronjobsToAdd.forEach(cronJob => {
                   }})
               })
             } else {
-              console.log('Cannot get inner containers for service ' + cronJob.id, (dockerCloudRestHost + '/api/app/v1/container/?state=Stopped&amp;service=' + currentServiceUri), currentServiceUri, error, body, response.statusCode);
+              console.log('Cannot get inner containers for service ' + cronJob.id, (dockerCloudRestHost + '/api/app/v1/container/?state=Stopped&amp;service=' + currentServiceUri), currentServiceUri, error, body, response.statusCode)
             }
           })
         }
