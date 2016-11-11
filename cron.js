@@ -18,42 +18,56 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-let cron = require("node-cron");
-let request = require("request");
-let curr;
+const linkedContainerApiUrlExpression = /^(.*)_TUTUM_API_URL$/g,
+  cronjobEnvVarSuffix = '_CRON',
+  defaultCronPattern = '* 0 * * * *' // If no cron pattern provided, trigger the action once an hour.
+
+let cron = require('node-cron'),
+  request = require('request')
+
+let activeCronjobs = []
 
 // Exit if no env-variable with http auth header is set.
-let dockerCloudAuthHeader = process.env["DOCKERCLOUD_AUTH"];
+let dockerCloudAuthHeader = process.env['DOCKERCLOUD_AUTH']
 if (!dockerCloudAuthHeader) {
-    throw ("Missing API permissions.")
+  throw ('Missing API permissions.')
 }
 
 // Extract cronjob data from all env variables
 let cronjobsToAdd = Object.keys(process.env)
-    .reduce(function (processedCronjobList, currentLinkedContainerEnvKey) {
-        (curr = (/^(.*)_TUTUM_API_URL$/g).exec(currentLinkedContainerEnvKey)) ?
-        processedCronjobList.push({
-            id: curr[1],
-            url: process.env[currentLinkedContainerEnvKey] + "start/",
-            pattern: process.env[curr[1] + "_CRON"] || "* 0 * * * *" // If no cron pattern provided, trigger the action once an hour.
-        }): null;
-        return processedCronjobList;
-    }, []);
+  .reduce((processedCronjobList, currentLinkedContainerEnvKey) => {
+    let currentLinkedContainerNameParts
+    ;(currentLinkedContainerNameParts = linkedContainerApiUrlExpression.exec(currentLinkedContainerEnvKey)) ?
+      processedCronjobList.push({
+        id: currentLinkedContainerNameParts[1],
+        url: process.env[currentLinkedContainerEnvKey] + 'start/',
+        pattern: process.env[currentLinkedContainerNameParts[1] + cronjobEnvVarSuffix] || defaultCronPattern
+      }) : null
+    return processedCronjobList
+  }, [])
 
 // Initialize routine for each cronjob obj.
 cronjobsToAdd.forEach(cronJob => {
-    console.debug("Installing " + cronJob.id + " job");
-    cron.schedule(cronJob.pattern, () => {
-        console.debug("Triggering " + cronJob.id + " start")
-        request.post({
-            url: cronJob.url,
-            headers: {
-                "Authorization": dockerCloudAuthHeader
-            }
-        }, (error, response, body) => {
-            if (!error && response.statusCode == 202) {
-                console.debug("Success");
-            }
-        })
-    });
-});
+  console.log('Installing ' + cronJob.id + ' job')
+  try {
+    activeCronjobs.push(cron.schedule(cronJob.pattern, () => {
+      console.log('Triggering ' + cronJob.id + ' start')
+      request.post({
+        url: cronJob.url,
+        headers: {
+          'Authorization': dockerCloudAuthHeader
+        }
+      }, (error, response, body) => {
+        if (!error && response.statusCode == 202) {
+          console.log('Success')
+        } else {
+          // TODO: Add better error handline
+          console.log('Failed')
+        }
+      })
+    }))
+    console.log(cronJob.id + ' installed')
+  } catch(ex) {
+    console.log('Critical error during cronjob installation')
+  }
+})
